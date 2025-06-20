@@ -6,22 +6,26 @@ class HorasTrabalhoState extends Equatable {
   final HorariosTrabalho horariosTrabalho;
   final bool canUndo;
   final bool canRedo;
+  final HorariosTrabalho? horariosSugeridos;
 
   const HorasTrabalhoState({
     required this.horariosTrabalho,
     this.canUndo = false,
     this.canRedo = false,
+    this.horariosSugeridos,
   });
 
   HorasTrabalhoState copyWith({
     HorariosTrabalho? horariosTrabalho,
     bool? canUndo,
     bool? canRedo,
+    HorariosTrabalho? horariosSugeridos,
   }) {
     return HorasTrabalhoState(
       horariosTrabalho: horariosTrabalho ?? this.horariosTrabalho,
       canUndo: canUndo ?? this.canUndo,
       canRedo: canRedo ?? this.canRedo,
+      horariosSugeridos: horariosSugeridos ?? this.horariosSugeridos,
     );
   }
 
@@ -34,5 +38,10 @@ class HorasTrabalhoState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [horariosTrabalho, canUndo, canRedo];
+  List<Object?> get props => [
+    horariosTrabalho,
+    canUndo,
+    canRedo,
+    horariosSugeridos,
+  ];
 }

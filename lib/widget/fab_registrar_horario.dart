@@ -11,7 +11,7 @@ class FabRegistrarHorario extends StatelessWidget {
   Widget build(BuildContext context) {
     return FloatingActionButton.extended(
       onPressed: () {
-        context.read<HorariosTrabalhoBloc>().add(RegistrarHorarioEvent());
+        context.read<HorariosTrabalhoBloc>().add(RegistrarHorarioAtualEvent());
       },
       label: const Text(AppStrings.registrarHorario),
       icon: const Icon(Icons.access_time),

@@ -8,7 +8,16 @@ abstract class HorasTrabalhoEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class RegistrarHorarioEvent extends HorasTrabalhoEvent {}
+class RegistrarHorarioAtualEvent extends HorasTrabalhoEvent {}
+
+class RegistrarHorarioSugeridoEvent extends HorasTrabalhoEvent {
+  final DateTime horarioSugerido;
+
+  const RegistrarHorarioSugeridoEvent(this.horarioSugerido);
+
+  @override
+  List<Object?> get props => [horarioSugerido];
+}
 
 class AtualizarHorasEvent extends HorasTrabalhoEvent {
   final HorariosTrabalho horasTrabalho;

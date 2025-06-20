@@ -29,6 +29,10 @@ class HorariosTrabalho extends Equatable {
     return copyWith(manha: manha);
   }
 
+  Turno getByTurnoTipo(TurnoTipo turnoTipo) {
+    return turnoTipo == TurnoTipo.manha ? manha : tarde;
+  }
+
   @override
   String toString() {
     return manha.isVazio && tarde.isVazio

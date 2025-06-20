@@ -20,7 +20,8 @@ class HorariosTrabalhoBloc
 
   HorariosTrabalhoBloc()
     : super(HorasTrabalhoState(horariosTrabalho: HorariosTrabalho())) {
-    on<RegistrarHorarioEvent>(_onRegistrarHorarioAtual);
+    on<RegistrarHorarioAtualEvent>(_onRegistrarHorarioAtual);
+    on<RegistrarHorarioSugeridoEvent>(_onRegistrarHorarioSugerido);
     on<AtualizarHorasEvent>(_onAtualizarHoras);
     on<UndoEvent>(_onUndo);
     on<RedoEvent>(_onRedo);
@@ -36,11 +37,14 @@ class HorariosTrabalhoBloc
   ) {
     _undoStack.push(horariosTrabalho);
 
+    final horarioSugerido = _calcularSugestaoHorario(horariosTrabalho);
+
     emit(
       state.copyWith(
         horariosTrabalho: horariosTrabalho,
         canUndo: _undoStack.isNotEmpty,
         canRedo: _redoStack.isNotEmpty,
+        horariosSugeridos: horarioSugerido,
       ),
     );
 
@@ -60,11 +64,14 @@ class HorariosTrabalhoBloc
     final estadoAnterior =
         _undoStack.isNotEmpty ? _undoStack.top : horariosInicial.copy();
 
+    final horarioSugerido = _calcularSugestaoHorario(estadoAnterior);
+
     emit(
       state.copyWith(
         horariosTrabalho: estadoAnterior,
         canUndo: _undoStack.isNotEmpty,
         canRedo: _redoStack.isNotEmpty,
+        horariosSugeridos: horarioSugerido,
       ),
     );
   }
@@ -77,12 +84,14 @@ class HorariosTrabalhoBloc
     _undoStack.push(top);
 
     final nextState = top;
+    final horariosSugeridos = _calcularSugestaoHorario(nextState);
 
     emit(
       state.copyWith(
         horariosTrabalho: nextState,
         canUndo: _undoStack.isNotEmpty,
         canRedo: _redoStack.isNotEmpty,
+        horariosSugeridos: horariosSugeridos,
       ),
     );
   }
@@ -101,12 +110,56 @@ class HorariosTrabalhoBloc
         );
   }
 
-  void _onRegistrarHorarioAtual(
-    RegistrarHorarioEvent event,
-    Emitter<HorasTrabalhoState> emit,
+  HorariosTrabalho? _calcularSugestaoHorario(
+    HorariosTrabalho? horariosTrabalho,
   ) {
-    final agora = DateTime.now();
+    final horarios = horariosTrabalho ?? state.horariosTrabalho;
+    final horariosSugeridos = HorariosTrabalho();
 
+    if (horarios.manha.entrada == null) {
+      if (horarios.manha.saida != null) {
+        return horariosSugeridos.withManha(
+          horarios.manha.copyWithNull(
+            entrada: horarios.manha.saida!.subtract(const Duration(hours: 4)),
+            saida: null,
+          ),
+        );
+      }
+
+      final agora = DateTime.now();
+      return horariosSugeridos.withManha(
+        horarios.manha.copyWithNull(
+          entrada: DateTime(agora.year, agora.month, agora.day, 8, 0),
+          saida: null,
+        ),
+      );
+    } else if (horarios.manha.saida == null && horarios.manha.entrada != null) {
+      return horariosSugeridos.withManha(
+        horarios.manha.copyWithNull(
+          entrada: null,
+          saida: horarios.manha.entrada!.add(const Duration(hours: 4)),
+        ),
+      );
+    } else if (horarios.tarde.entrada == null && horarios.manha.saida != null) {
+      return horariosSugeridos.withTarde(
+        horarios.tarde.copyWithNull(
+          entrada: horarios.manha.saida!.add(const Duration(hours: 1)),
+          saida: null,
+        ),
+      );
+    } else if (horarios.tarde.saida == null && horarios.tarde.entrada != null) {
+      return horariosSugeridos.withTarde(
+        horarios.tarde.copyWithNull(
+          entrada: null,
+          saida: horarios.tarde.entrada!.add(const Duration(hours: 4)),
+        ),
+      );
+    } else {
+      return HorariosTrabalho();
+    }
+  }
+
+  void _onRegistrarHorario(DateTime horario, Emitter<HorasTrabalhoState> emit) {
     TurnoSemRegistro? turnoSemRegistro = _determinarPrimeiroTurnoSemRegistro();
 
     if (turnoSemRegistro == null) {
@@ -118,8 +171,8 @@ class HorariosTrabalhoBloc
 
     final Turno turnoRegistrado =
         turnoARegistrar.entrada == null
-            ? turnoARegistrar.copyWith(entrada: agora)
-            : turnoARegistrar.copyWith(saida: agora);
+            ? turnoARegistrar.copyWith(entrada: horario)
+            : turnoARegistrar.copyWith(saida: horario);
 
     _atualizarHoras(
       isManha
@@ -127,6 +180,22 @@ class HorariosTrabalhoBloc
           : state.horariosTrabalho.withTarde(turnoRegistrado),
       emit,
     );
+  }
+
+  void _onRegistrarHorarioAtual(
+    RegistrarHorarioAtualEvent event,
+    Emitter<HorasTrabalhoState> emit,
+  ) {
+    final agora = DateTime.now();
+    _onRegistrarHorario(agora, emit);
+  }
+
+  void _onRegistrarHorarioSugerido(
+    RegistrarHorarioSugeridoEvent event,
+    Emitter<HorasTrabalhoState> emit,
+  ) {
+    final horarioSugerido = event.horarioSugerido;
+    _onRegistrarHorario(horarioSugerido, emit);
   }
 
   void _onAtualizarHoras(
@@ -166,8 +235,14 @@ class HorariosTrabalhoBloc
       );
 
       horariosInicial = horariosTrabalho.copy();
+      final horariosSugeridos = _calcularSugestaoHorario(horariosTrabalho);
 
-      emit(state.copyWith(horariosTrabalho: horariosTrabalho));
+      emit(
+        state.copyWith(
+          horariosTrabalho: horariosTrabalho,
+          horariosSugeridos: horariosSugeridos,
+        ),
+      );
     }
   }
 }

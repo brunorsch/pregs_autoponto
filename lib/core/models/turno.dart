@@ -47,6 +47,10 @@ class Turno extends Equatable {
     );
   }
 
+  Turno copyWithNull({DateTime? entrada, DateTime? saida}) {
+    return _copyWithNull(entrada: entrada, saida: saida);
+  }
+
   Turno withEntrada(DateTime? entrada) {
     return _copyWithNull(entrada: entrada, saida: saida);
   }

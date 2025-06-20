@@ -21,9 +21,11 @@ class HomeScreen extends StatelessWidget {
     final bool isManha = turnoTipo == TurnoTipo.manha;
 
     return HorarioCard(
-      rotuloTurno: isManha ? AppStrings.entrada : AppStrings.saida,
+      rotuloTurno: isManha ? AppStrings.turnoManha : AppStrings.turnoTarde,
       turno:
           isManha ? state.horariosTrabalho.manha : state.horariosTrabalho.tarde,
+      turnoTipo: turnoTipo,
+      horariosSugeridos: state.horariosSugeridos,
       onEdit: (turno) {
         context.read<HorariosTrabalhoBloc>().add(
           AtualizarHorasEvent(
